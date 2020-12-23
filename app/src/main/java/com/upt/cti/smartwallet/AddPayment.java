@@ -72,12 +72,11 @@ public class AddPayment extends AppCompatActivity {
     }
 
     public void onAddPaymentButtonClick(String time){
-        String name = EPaymentName.getText().toString();
-        double cost = Double.parseDouble(EPaymentCost.getText().toString());
-
-        if(name.isEmpty() || EPaymentCost.getText().toString().isEmpty()){
-            Toast.makeText(this, "Complete all fields", Toast.LENGTH_SHORT).show();
+        if(EPaymentName.getText().toString().isEmpty() || EPaymentCost.getText().toString().isEmpty()){
+            Toast.makeText(this, "Please complete all fields!", Toast.LENGTH_SHORT).show();
         }else{
+            String name = EPaymentName.getText().toString();
+            double cost = Double.parseDouble(EPaymentCost.getText().toString());
             AppState.get().getDatabaseReference().child("wallet").child(time).setValue(new Payment(name, cost, typeOfPaymentSelected));
             Toast.makeText(AddPayment.this, "Added new payment.", Toast.LENGTH_SHORT).show();
             this.finish();
@@ -152,6 +151,8 @@ public class AddPayment extends AppCompatActivity {
                     databaseReference = AppState.get().getDatabaseReference();
                     databaseReference.child("wallet").child(payment.timestamp).removeValue();
                     this.finish();
+                }else{
+                    Toast.makeText(this, "Nothing to delete.", Toast.LENGTH_SHORT).show();
                 }
                 break;
         }
