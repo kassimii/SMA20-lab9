@@ -1,10 +1,21 @@
 package com.upt.cti.smartwallet;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.widget.Toast;
+
 import com.google.firebase.database.DatabaseReference;
 import com.upt.cti.smartwallet.model.Payment;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class AppState {
     private static AppState singletonObject;
@@ -42,4 +53,5 @@ public class AppState {
         Date now = new Date();
         return sdfDate.format(now);
     }
+
 }

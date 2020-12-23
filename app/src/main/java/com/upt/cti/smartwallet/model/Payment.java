@@ -1,6 +1,8 @@
 package com.upt.cti.smartwallet.model;
 
-public class Payment {
+import java.io.Serializable;
+
+public class Payment implements Serializable {
     public String timestamp;
     private double cost;
     private String name;
