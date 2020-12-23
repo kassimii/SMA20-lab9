@@ -5,7 +5,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -32,6 +34,10 @@ public class Payments extends AppCompatActivity {
     private ListView listPayments;
     private PaymentAdapter adapter;
     private List<Payment> payments = new ArrayList<>();
+    private int currentMonth;
+    private SharedPreferences prefUser;
+
+    private final static String PREF_SETTINGS = "pref_settings";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,10 +48,18 @@ public class Payments extends AppCompatActivity {
         databaseReference = database.getReference();
         AppState.get().setDatabaseReference(databaseReference);
 
+        SharedPreferences sharedPreferences = getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE);
+        currentMonth = sharedPreferences.getInt("MONTH", -1);
+        if(currentMonth == -1){
+            currentMonth = Month.monthFromTimestamp(AppState.getCurrentTimeDate());
+        }
+
         initializeComponents();
         getPaymentsFromDB();
         onFabButtonClick();
         onListItemClick();
+        onPrevButtonClick();
+        onNextButtonClick();
     }
 
     public void initializeComponents(){
@@ -61,17 +75,21 @@ public class Payments extends AppCompatActivity {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 try {
-                    Payment payment = snapshot.getValue(Payment.class);
-                    payment.setTimestamp(snapshot.getKey());
-                    payments.add(payment);
+                    if(currentMonth == Month.monthFromTimestamp(snapshot.getKey())){
+                        Payment payment = snapshot.getValue(Payment.class);
+                        payment.setTimestamp(snapshot.getKey());
+                        payments.add(payment);
 
-                    adapter = new PaymentAdapter(Payments.this, R.layout.item_payment, payments);
-                    listPayments.setAdapter(adapter);
-                    tStatus.setText("Found " + payments.size() + " payments in DB");
+                        adapter = new PaymentAdapter(Payments.this, R.layout.item_payment, payments);
+                        listPayments.setAdapter(adapter);
+                        tStatus.setText("Found " + payments.size() + " payments for " + Month.intToMonthName(currentMonth) + ".");
+
+                        adapter.notifyDataSetChanged();
+                    }else{
+                        tStatus.setText("No payments found for " + Month.intToMonthName(currentMonth) + ".");
+                    }
                 } catch (Exception e) {
                 }
-
-                adapter.notifyDataSetChanged();
             }
 
             @Override
@@ -132,6 +150,55 @@ public class Payments extends AppCompatActivity {
                 startActivity(new Intent(Payments.this, AddPayment.class));
             }
         });
+    }
+
+    public void saveToSharedPreferences(int month){
+        if(month == 0){
+            month = 11;
+        }
+        if(month == 12){
+            month = 0;
+        }
+        prefUser = getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE);
+
+        prefUser.edit().putInt("MONTH", month).apply();
+    }
+
+    public void onPrevButtonClick(){
+        bPrevious.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveToSharedPreferences(currentMonth-1);
+                recreate();
+            }
+        });
+    }
+
+    public void onNextButtonClick(){
+        bNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveToSharedPreferences(currentMonth+1);
+                recreate();
+            }
+        });
+    }
+
+    public enum Month{
+        January, February, March, April, May, Juny, July, August, September, October, November, December;
+
+        public static int monthNameToInt(Month month){
+            return month.ordinal();
+        }
+
+        public static Month intToMonthName(int index){
+            return Month.values()[index];
+        }
+
+        public static int monthFromTimestamp(String timestamp){
+            int month = Integer.parseInt(timestamp.substring(5,7));
+            return month -1;
+        }
     }
 
 }
